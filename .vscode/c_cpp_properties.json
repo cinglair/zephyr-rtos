@@ -4,13 +4,14 @@
             "name": "Linux",
             "includePath": [
                 "${workspaceFolder}/**",
-                "~/zephyrproject/zephyr/include/**"
+                "~/zephyrproject/zephyr/include/**",
+                "/Library/Developer/CommandLineTools/SDKs/MacOSX14.0.sdk/System/Library/Frameworks/Kernel.framework/Versions/A/Headers/sys"
             ],
             "defines": [],
             "compilerPath": "/usr/bin/gcc",
             "cStandard": "c17",
             "cppStandard": "gnu++17",
-            "intelliSenseMode": "linux-gcc-x64"
+            "intelliSenseMode": "macos-clang-x64"
         }
     ],
     "version": 4

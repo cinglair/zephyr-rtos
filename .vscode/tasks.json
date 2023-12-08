@@ -11,15 +11,11 @@
 			"linux": {
 				"command": "${workspaceFolder}/build.sh"
 			},
-			"windows": {
-				
-			},
+			"windows": {},
 			"osx": {
-				
+				"command": "${workspaceFolder}/build.sh"
 			},
-			"args": [
-
-			],
+			"args": [],
 			"problemMatcher": [
 				"$gcc"
 			]
@@ -30,11 +26,9 @@
 			"linux": {
 				"command": "${workspaceFolder}/flash.sh"
 			},
-			"windows": {
-				
-			},
+			"windows": {},
 			"osx": {
-				
+				"command": "${workspaceFolder}/flash.sh"
 			},
 			"args": [
 				"flash"
@@ -42,6 +36,6 @@
 			"problemMatcher": [
 				"$gcc"
 			]
-		}
+		},
 	]
 }

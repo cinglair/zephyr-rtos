@@ -7,5 +7,6 @@
         "kernel.h": "c",
         "kernel_includes.h": "c",
         "*.tcc": "c"
-    }
+    },
+    "C_Cpp.errorSquiggles": "enabled"
 }
