@@ -6,7 +6,8 @@
         "device.h": "c",
         "kernel.h": "c",
         "kernel_includes.h": "c",
-        "*.tcc": "c"
+        "*.tcc": "c",
+        "log.h": "c"
     },
     "C_Cpp.errorSquiggles": "enabled"
 }
