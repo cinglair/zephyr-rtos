@@ -7,7 +7,8 @@
         "kernel.h": "c",
         "kernel_includes.h": "c",
         "*.tcc": "c",
-        "log.h": "c"
+        "log.h": "c",
+        "zbus.h": "c"
     },
     "C_Cpp.errorSquiggles": "enabled"
 }
