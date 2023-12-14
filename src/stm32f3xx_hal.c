@@ -22,7 +22,7 @@
 
 /* USER CODE BEGIN Includes */
 
-#include <stm32f3xx_hal_dma.h>
+#include "main.h"
 
 /* USER CODE END Includes */
 extern DMA_HandleTypeDef hdma_dac_ch1;

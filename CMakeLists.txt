@@ -8,6 +8,13 @@ list(APPEND CONF_FILE "boards/stm32f3_disco.conf")
 find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
 project(se28cp_app)
 
-target_sources(app PRIVATE src/stm32f3xx_hal.c src/fft.c src/main.c )
+target_sources(app PRIVATE 
+    src/main.h 
+    src/led.h 
+    src/status.c 
+    src/keyboard.h
+    src/keyboard.c
+    src/main.c 
+)
 
 
