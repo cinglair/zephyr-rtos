@@ -7,7 +7,7 @@ static const struct button button0 = {
 
 static struct gpio_callback buttonCbData;
 
-static void handle_button_press(const struct device *dev, struct gpio_callback *cb, uint32_t pins)
+static void button_press_callback(const struct device *dev, struct gpio_callback *cb, uint32_t pins)
 {
 	printk("Botão apertado em %" PRIu32 "\n", k_cycle_get_32());
 }
@@ -40,7 +40,7 @@ int keyboard(const struct button *button)
 		return 0;
 	}
 
-	gpio_init_callback(&buttonCbData, handle_button_press, BIT(spec->pin));
+	gpio_init_callback(&buttonCbData, button_press_callback, BIT(spec->pin));
 	gpio_add_callback(spec->port, &buttonCbData);
 	LOG_INF("Botão configurado na porta %s no pino %d\n", spec->port->name, spec->pin);
 
