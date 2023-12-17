@@ -8,7 +8,23 @@
         "kernel_includes.h": "c",
         "*.tcc": "c",
         "log.h": "c",
-        "zbus.h": "c"
+        "zbus.h": "c",
+        "arm_common_tables.h": "c",
+        "core_cm4.h": "c",
+        "string.h": "c",
+        "cstdlib": "c",
+        "arm_const_structs.h": "c",
+        "math.h": "c",
+        "stdlib.h": "c",
+        "arm_math.h": "c",
+        "core_cmfunc.h": "c",
+        "core_cminstr.h": "c",
+        "core_cmsimd.h": "c",
+        "main.h": "c",
+        "stm32f3xx_hal_dma.h": "c",
+        "stm32f3xx_hal_def.h": "c",
+        "stddef.h": "c",
+        "stm32_hal_legacy.h": "c"
     },
     "C_Cpp.errorSquiggles": "enabled"
 }
