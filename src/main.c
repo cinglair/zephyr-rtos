@@ -1,15 +1,15 @@
 #include "main.h"
 #include <math.h>
-#include "arm_const_structs.h"
+#include <arm_const_structs.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
 
 ADC_HandleTypeDef hadc1;
+DMA_HandleTypeDef hdma_adc1;
 
 DAC_HandleTypeDef hdac;
 DMA_HandleTypeDef hdma_dac_ch1;
-DAC_HandleTypeDef hdac1;
 
 uint16_t adcBuffer[256];
 float32_t ReIm[256 * 2];
@@ -24,6 +24,7 @@ TIM_HandleTypeDef htim8;
 UART_HandleTypeDef huart4;
 
 void SystemClock_Config(void);
+static void MX_GPIO_Init(void);
 static void MX_DMA_Init(void);
 static void MX_ADC1_Init(void);
 static void MX_DAC_Init(void);
@@ -82,15 +83,14 @@ static void prvTaskDACCommand(char *pcWriteBuffer, size_t xWriteBufferLen,
 
 	if (!strcmp(parameter, "sine")) {
 		HAL_TIM_Base_Stop(&htim2);
-		HAL_DAC_Stop_DMA(&hdac1, DAC_CHANNEL_1);
-		HAL_DAC_Start_DMA(&hdac1, DAC_CHANNEL_1, (uint32_t *)sin_wave, 256,
-				  DAC_ALIGN_12B_R);
+		HAL_DAC_Stop_DMA(&hdac, DAC_CHANNEL_1);
+		HAL_DAC_Start_DMA(&hdac, DAC_CHANNEL_1, (uint32_t *)sin_wave, 256, DAC_ALIGN_12B_R);
 		HAL_TIM_Base_Start(&htim2);
 		printk("Sine set for the DAC signal\n\r");
 	} else if (!strcmp(parameter, "sine3rd")) {
 		HAL_TIM_Base_Stop(&htim2);
-		HAL_DAC_Stop_DMA(&hdac1, DAC_CHANNEL_1);
-		HAL_DAC_Start_DMA(&hdac1, DAC_CHANNEL_1, (uint32_t *)sin_wave_3rd_harmonic, 256,
+		HAL_DAC_Stop_DMA(&hdac, DAC_CHANNEL_1);
+		HAL_DAC_Start_DMA(&hdac, DAC_CHANNEL_1, (uint32_t *)sin_wave_3rd_harmonic, 256,
 				  DAC_ALIGN_12B_R);
 		HAL_TIM_Base_Start(&htim2);
 		printk("Sine 3rd harmonic set for the DAC signal\n\r");
@@ -130,14 +130,14 @@ static void prvTaskFFTCommand(char *pcWriteBuffer, size_t xWriteBufferLen,
 void adc_task(void *param)
 {
 	HAL_ADC_Start_DMA(&hadc1, (uint32_t *)adcBuffer, 256);
-	HAL_DAC_Start_DMA(&hdac1, DAC_CHANNEL_1, (uint32_t *)sin_wave_3rd_harmonic, 256,
+	// TODO: Entender por que essa bosta nao funcionando
+	HAL_DAC_Start_DMA(&hdac, DAC_CHANNEL_1, (uint32_t *)sin_wave_3rd_harmonic, 256,
 			  DAC_ALIGN_12B_R);
 
 	HAL_TIM_Base_Start(&htim8);
 	HAL_TIM_Base_Start(&htim3);
 
 	while (1) {
-
 		int k = 0;
 		for (int i = 0; i < 256; i++) {
 			ReIm[k] = (float)adcBuffer[i] * 0.0008056640625;
@@ -156,7 +156,7 @@ void adc_task(void *param)
 	}
 }
 
-K_THREAD_DEFINE(adc_thread_id, 512, adc_task, NULL, NULL, NULL, 5, 0, 0);
+K_THREAD_DEFINE(adc, 512, adc_task, NULL, NULL, NULL, 5, 0, 0);
 
 // ************* ADC ****************
 
@@ -164,6 +164,7 @@ int main(void)
 {
 	HAL_Init();
 	SystemClock_Config();
+	MX_GPIO_Init();
 	MX_DMA_Init();
 	MX_ADC1_Init();
 	MX_DAC_Init();
@@ -180,18 +181,21 @@ void SystemClock_Config(void)
 	RCC_OscInitTypeDef RCC_OscInitStruct = {0};
 	RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
 	RCC_PeriphCLKInitTypeDef PeriphClkInit = {0};
+
 	RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
 	RCC_OscInitStruct.HSIState = RCC_HSI_ON;
 	RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
 	RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
 	RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
 	RCC_OscInitStruct.PLL.PLLMUL = RCC_PLL_MUL16;
+
 	RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_SYSCLK |
 				      RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2;
 	RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
 	RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
 	RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV2;
 	RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
+
 	PeriphClkInit.PeriphClockSelection =
 		RCC_PERIPHCLK_UART4 | RCC_PERIPHCLK_TIM8 | RCC_PERIPHCLK_ADC12;
 	PeriphClkInit.Uart4ClockSelection = RCC_UART4CLKSOURCE_PCLK1;
@@ -217,7 +221,9 @@ static void MX_ADC1_Init(void)
 	hadc1.Init.EOCSelection = ADC_EOC_SINGLE_CONV;
 	hadc1.Init.LowPowerAutoWait = DISABLE;
 	hadc1.Init.Overrun = ADC_OVR_DATA_OVERWRITTEN;
+
 	multimode.Mode = ADC_MODE_INDEPENDENT;
+
 	sConfig.Channel = ADC_CHANNEL_2;
 	sConfig.Rank = ADC_REGULAR_RANK_1;
 	sConfig.SingleDiff = ADC_SINGLE_ENDED;
@@ -297,7 +303,70 @@ static void MX_UART4_Init(void)
 
 static void MX_DMA_Init(void)
 {
+	/* DMA controller clock enable */
 	__HAL_RCC_DMA2_CLK_ENABLE();
+	__HAL_RCC_DMA1_CLK_ENABLE();
+
+	/* DMA interrupt init */
+	/* DMA1_Channel1_IRQn interrupt configuration */
+	HAL_NVIC_SetPriority(DMA1_Channel1_IRQn, 0, 0);
+	HAL_NVIC_EnableIRQ(DMA1_Channel1_IRQn);
+	/* DMA2_Channel3_IRQn interrupt configuration */
 	HAL_NVIC_SetPriority(DMA2_Channel3_IRQn, 0, 0);
 	HAL_NVIC_EnableIRQ(DMA2_Channel3_IRQn);
+}
+
+static void MX_GPIO_Init(void)
+{
+	GPIO_InitTypeDef GPIO_InitStruct = {0};
+
+	__HAL_RCC_GPIOE_CLK_ENABLE();
+	__HAL_RCC_GPIOC_CLK_ENABLE();
+	__HAL_RCC_GPIOF_CLK_ENABLE();
+	__HAL_RCC_GPIOA_CLK_ENABLE();
+	__HAL_RCC_GPIOB_CLK_ENABLE();
+
+	HAL_GPIO_WritePin(GPIOE,
+			  CS_I2C_SPI_Pin | LD4_Pin | LD3_Pin | LD5_Pin | LD7_Pin | LD9_Pin |
+				  LD10_Pin | LD8_Pin | LD6_Pin,
+			  GPIO_PIN_RESET);
+
+	GPIO_InitStruct.Pin =
+		DRDY_Pin | MEMS_INT3_Pin | MEMS_INT4_Pin | MEMS_INT1_Pin | MEMS_INT2_Pin;
+	GPIO_InitStruct.Mode = GPIO_MODE_EVT_RISING;
+	GPIO_InitStruct.Pull = GPIO_NOPULL;
+	HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
+
+	GPIO_InitStruct.Pin = CS_I2C_SPI_Pin | LD4_Pin | LD3_Pin | LD5_Pin | LD7_Pin | LD9_Pin |
+			      LD10_Pin | LD8_Pin | LD6_Pin;
+	GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+	GPIO_InitStruct.Pull = GPIO_NOPULL;
+	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+	HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
+
+	GPIO_InitStruct.Pin = B1_Pin;
+	GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+	GPIO_InitStruct.Pull = GPIO_PULLDOWN;
+	HAL_GPIO_Init(B1_GPIO_Port, &GPIO_InitStruct);
+
+	GPIO_InitStruct.Pin = SPI1_SCK_Pin | SPI1_MISO_Pin | SPI1_MISOA7_Pin;
+	GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+	GPIO_InitStruct.Pull = GPIO_NOPULL;
+	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+	GPIO_InitStruct.Alternate = GPIO_AF5_SPI1;
+	HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+	GPIO_InitStruct.Pin = DM_Pin | DP_Pin;
+	GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+	GPIO_InitStruct.Pull = GPIO_NOPULL;
+	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
+	GPIO_InitStruct.Alternate = GPIO_AF14_USB;
+	HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+	GPIO_InitStruct.Pin = I2C1_SCL_Pin | I2C1_SDA_Pin;
+	GPIO_InitStruct.Mode = GPIO_MODE_AF_OD;
+	GPIO_InitStruct.Pull = GPIO_NOPULL;
+	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+	GPIO_InitStruct.Alternate = GPIO_AF4_I2C1;
+	HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 }
