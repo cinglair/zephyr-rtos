@@ -11,6 +11,8 @@ DMA_HandleTypeDef hdma_adc1;
 DAC_HandleTypeDef hdac;
 DMA_HandleTypeDef hdma_dac_ch1;
 
+DMA_HandleTypeDef hdma_dac1_ch1;
+
 uint16_t adcBuffer[256];
 float32_t ReIm[256 * 2];
 float32_t mod[256];
@@ -75,65 +77,64 @@ uint16_t sin_wave_3rd_harmonic[256] = {
 	850,  915,  983,  1054, 1127, 1203, 1281, 1361, 1443, 1526, 1611, 1697, 1784, 1871, 1959,
 	2047};
 
-static void prvTaskDACCommand(char *pcWriteBuffer, size_t xWriteBufferLen,
-			      const char *pcCommandString)
-{
-	// pegar os parametros do shell
-	char parameter[] = "sine";
+// static void prvTaskDACCommand(char *pcWriteBuffer, size_t xWriteBufferLen,
+// 			      const char *pcCommandString)
+// {
+// 	// pegar os parametros do shell
+// 	char parameter[] = "sine";
 
-	if (!strcmp(parameter, "sine")) {
-		HAL_TIM_Base_Stop(&htim2);
-		HAL_DAC_Stop_DMA(&hdac, DAC_CHANNEL_1);
-		HAL_DAC_Start_DMA(&hdac, DAC_CHANNEL_1, (uint32_t *)sin_wave, 256, DAC_ALIGN_12B_R);
-		HAL_TIM_Base_Start(&htim2);
-		printk("Sine set for the DAC signal\n\r");
-	} else if (!strcmp(parameter, "sine3rd")) {
-		HAL_TIM_Base_Stop(&htim2);
-		HAL_DAC_Stop_DMA(&hdac, DAC_CHANNEL_1);
-		HAL_DAC_Start_DMA(&hdac, DAC_CHANNEL_1, (uint32_t *)sin_wave_3rd_harmonic, 256,
-				  DAC_ALIGN_12B_R);
-		HAL_TIM_Base_Start(&htim2);
-		printk("Sine 3rd harmonic set for the DAC signal\n\r");
-	} else {
-		printk("Not a valid DAC signal!\n\r");
-	}
-}
+// 	if (!strcmp(parameter, "sine")) {
+// 		HAL_TIM_Base_Stop(&htim2);
+// 		HAL_DAC_Stop_DMA(&hdac, DAC_CHANNEL_1);
+// 		HAL_DAC_Start_DMA(&hdac, DAC_CHANNEL_1, (uint32_t *)sin_wave, 256, DAC_ALIGN_12B_R);
+// 		HAL_TIM_Base_Start(&htim2);
+// 		printk("Sine set for the DAC signal\n\r");
+// 	} else if (!strcmp(parameter, "sine3rd")) {
+// 		HAL_TIM_Base_Stop(&htim2);
+// 		HAL_DAC_Stop_DMA(&hdac, DAC_CHANNEL_1);
+// 		HAL_DAC_Start_DMA(&hdac, DAC_CHANNEL_1, (uint32_t *)sin_wave_3rd_harmonic, 256,
+// 				  DAC_ALIGN_12B_R);
+// 		HAL_TIM_Base_Start(&htim2);
+// 		printk("Sine 3rd harmonic set for the DAC signal\n\r");
+// 	} else {
+// 		printk("Not a valid DAC signal!\n\r");
+// 	}
+// }
 
-static void prvTaskFFTCommand(char *pcWriteBuffer, size_t xWriteBufferLen,
-			      const char *pcCommandString)
-{
-	const char *parameter1 = "10";
-	const char *parameter2 = "10";
+// static void prvTaskFFTCommand(char *pcWriteBuffer, size_t xWriteBufferLen,
+// 			      const char *pcCommandString)
+// {
+// 	const char *parameter1 = "10";
+// 	const char *parameter2 = "10";
 
-	// pegar os argumentos do shell
+// 	// pegar os argumentos do shell
 
-	int first_harm = atoi(parameter1);
-	int number_harm = atoi(parameter2);
+// 	int first_harm = atoi(parameter1);
+// 	int number_harm = atoi(parameter2);
 
-	if ((first_harm >= 0) && (number_harm > 0)) {
-		int len = sprintf(pcWriteBuffer,
-				  "FFT result for the current DAC signal (%d, %d): ", first_harm,
-				  number_harm);
-		for (int i = first_harm; i < (number_harm + first_harm); i++) {
-			if (i == 0) {
-				len += sprintf(&pcWriteBuffer[len], "%f ", mod[i] / 2.0);
-			} else {
-				len += sprintf(&pcWriteBuffer[len], "%f ", mod[i]);
-			}
-		}
-		sprintf(&pcWriteBuffer[len], "\n\r");
-	} else {
-		printk("Invalid parameters!\n\r");
-	}
-}
+// 	if ((first_harm >= 0) && (number_harm > 0)) {
+// 		int len = sprintf(pcWriteBuffer,
+// 				  "FFT result for the current DAC signal (%d, %d): ", first_harm,
+// 				  number_harm);
+// 		for (int i = first_harm; i < (number_harm + first_harm); i++) {
+// 			if (i == 0) {
+// 				len += sprintf(&pcWriteBuffer[len], "%f ", mod[i] / 2.0);
+// 			} else {
+// 				len += sprintf(&pcWriteBuffer[len], "%f ", mod[i]);
+// 			}
+// 		}
+// 		sprintf(&pcWriteBuffer[len], "\n\r");
+// 	} else {
+// 		printk("Invalid parameters!\n\r");
+// 	}
+// }
 
 void adc_task(void *param)
 {
 	HAL_ADC_Start_DMA(&hadc1, (uint32_t *)adcBuffer, 256);
 	// TODO: Entender por que essa bosta nao funcionando
-	HAL_DAC_Start_DMA(&hdac, DAC_CHANNEL_1, (uint32_t *)sin_wave_3rd_harmonic, 256,
+	HAL_DAC_Start_DMA(&hdac, DAC1_CHANNEL_1, (uint32_t *)sin_wave_3rd_harmonic, 256,
 			  DAC_ALIGN_12B_R);
-
 	HAL_TIM_Base_Start(&htim8);
 	HAL_TIM_Base_Start(&htim3);
 
@@ -156,18 +157,16 @@ void adc_task(void *param)
 	}
 }
 
-K_THREAD_DEFINE(adc, 512, adc_task, NULL, NULL, NULL, 5, 0, 0);
-
 // ************* ADC ****************
 
 int main(void)
 {
 	HAL_Init();
 	SystemClock_Config();
+	MX_DAC_Init();
 	MX_GPIO_Init();
 	MX_DMA_Init();
 	MX_ADC1_Init();
-	MX_DAC_Init();
 	MX_TIM2_Init();
 	MX_TIM3_Init();
 	MX_TIM8_Init();
@@ -175,6 +174,8 @@ int main(void)
 
 	return 0;
 }
+
+K_THREAD_DEFINE(adc, STACKSIZE, adc_task, NULL, NULL, NULL, 7, 0, 0);
 
 void SystemClock_Config(void)
 {
@@ -202,7 +203,6 @@ void SystemClock_Config(void)
 	PeriphClkInit.Adc12ClockSelection = RCC_ADC12PLLCLK_DIV1;
 	PeriphClkInit.Tim8ClockSelection = RCC_TIM8CLK_HCLK;
 }
-
 static void MX_ADC1_Init(void)
 {
 	ADC_MultiModeTypeDef multimode = {0};
@@ -301,12 +301,23 @@ static void MX_UART4_Init(void)
 	huart4.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
 }
 
+void DMA1_Channel1_IRQHandler(void)
+{
+	HAL_DMA_IRQHandler(&hdma_dac1_ch1);
+}
+
+void DMA1_Channel2_IRQHandler(void)
+{
+	HAL_DMA_IRQHandler(&hdma_adc1);
+}
+
 static void MX_DMA_Init(void)
 {
 	/* DMA controller clock enable */
-	__HAL_RCC_DMA2_CLK_ENABLE();
 	__HAL_RCC_DMA1_CLK_ENABLE();
+	__HAL_RCC_DMA2_CLK_ENABLE();
 
+	IRQ_CONNECT(DMA2_Channel3_IRQn, 5, DMA1_Channel1_IRQHandler, 0, 0);
 	/* DMA interrupt init */
 	/* DMA1_Channel1_IRQn interrupt configuration */
 	HAL_NVIC_SetPriority(DMA1_Channel1_IRQn, 0, 0);
