@@ -14,7 +14,6 @@ target_sources(app PRIVATE
     src/status.c 
     src/keyboard.h
     src/keyboard.c
-    src/stm32f3xx_hal_msp-3.c
     src/main.c 
 )
 
