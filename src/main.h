@@ -15,6 +15,10 @@
 #include <stm32f3xx_hal_dma.h>
 #include <stm32f3xx_hal_dac.h>
 #include <stm32f3xx_hal_uart.h>
+#include <math.h>
+#include <arm_const_structs.h>
+#include <stdlib.h>
+#include <stdio.h>
 
 #define ZEPHYR_USER_NODE DT_PATH(zephyr_user)
 LOG_MODULE_DECLARE(zbus, CONFIG_ZBUS_LOG_LEVEL);
