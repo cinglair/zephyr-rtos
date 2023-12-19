@@ -6,18 +6,16 @@ static const struct led led0 = {
 };
 
 struct k_timer status_led_timer;
-extern void status_led_expiry_function(struct k_timer *timer_id);
 
-static void blink_callback(const struct device *dev, struct gpio_callback *cb, uint32_t pins)
+static void blink_callback(struct k_timer *timer)
 {
-	gpio_pin_toggle(&led0.spec.port, &led0.spec.pin);
+	gpio_pin_toggle(led0.spec.port, led0.spec.pin);
 }
 
 void blink(const struct led *led)
 {
 	const struct gpio_dt_spec *spec = &led->spec;
 	int ret;
-	int cnt = 0;
 
 	if (!device_is_ready(spec->port)) {
 		LOG_INF("Erro: LED %s não está pronto\n", spec->port->name);
