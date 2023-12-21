@@ -4,10 +4,10 @@
             "name": "Linux",
             "includePath": [
                 "${workspaceFolder}/**",
-                "~/zephyrproject/zephyr/include/zephyr/**",
-                "/Library/Developer/CommandLineTools/SDKs/MacOSX14.0.sdk/System/Library/Frameworks/Kernel.framework/Versions/A/Headers/sys",
+                "~/zephyrproject/zephyr/include/**",
                 "~/zephyrproject/modules/hal/stm32/stm32cube/stm32f3xx/drivers/src",
-                "~/zephyrproject/modules/hal/stm32/stm32cube/stm32f3xx/drivers/include"
+                "~/zephyrproject/modules/hal/stm32/stm32cube/stm32f3xx/drivers/include",
+                "~/zephyrproject/modules/hal/cmsis"
             ],
             "defines": [],
             "compilerPath": "/usr/bin/gcc",

@@ -14,7 +14,10 @@ target_sources(app PRIVATE
     src/status.c 
     src/keyboard.h
     src/keyboard.c
+    src/adc.c
+    src/zbus.c
     src/main.c 
+   
 )
 
 

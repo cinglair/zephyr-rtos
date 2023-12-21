@@ -1,4 +1,4 @@
-#include "stm32f3xx_hal.c"
+#include "main.h"
 
 static int cmd_led(const struct shell *shell, size_t argc, char **argv)
 {

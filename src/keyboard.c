@@ -4,12 +4,24 @@ static const struct button button0 = {
 	.spec = GPIO_DT_SPEC_GET_OR(SW0_NODE, gpios, {0}),
 	.num = 0,
 };
-
 static struct gpio_callback buttonCbData;
+static struct k_work_delayable cooldown_work;
+
+static void button_event_handler()
+{
+	printk("Botão Pressionado\n");
+}
+
+static void cooldown_expired(struct k_work *work)
+{
+    ARG_UNUSED(work);
+    gpio_pin_get_dt(&button0.spec);
+    button_event_handler();
+}
 
 static void button_press_callback(const struct device *dev, struct gpio_callback *cb, uint32_t pins)
 {
-	printk("Botão apertado em %" PRIu32 "\n", k_cycle_get_32());
+	k_work_reschedule(&cooldown_work, K_MSEC(100));
 }
 
 int keyboard(const struct button *button)
@@ -42,11 +54,12 @@ int keyboard(const struct button *button)
 
 	gpio_init_callback(&buttonCbData, button_press_callback, BIT(spec->pin));
 	gpio_add_callback(spec->port, &buttonCbData);
+	k_work_init_delayable(&cooldown_work, cooldown_expired);
 	LOG_INF("Botão configurado na porta %s no pino %d\n", spec->port->name, spec->pin);
 
     while(1) {
-        k_msleep(SLEEP_TIME_MS);
-    }
+		k_sleep(K_MSEC(SLEEP_TIME_MS));
+	}
 }
 
 void keyboard0(void)

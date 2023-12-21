@@ -30,9 +30,11 @@ void blink(const struct led *led)
 	}
 
 	k_timer_init(&status_led_timer, blink_callback, NULL);
-	k_timer_start(&status_led_timer, K_MSEC(SLEEP_TIME_MS), K_MSEC(SLEEP_TIME_MS));
+	k_timer_start(&status_led_timer, K_MSEC(200), K_MSEC(200));
 
-	k_sleep(K_FOREVER);
+	while(1) {
+		k_sleep(K_MSEC(SLEEP_TIME_MS));
+	}
 }
 
 void blink0(void)
